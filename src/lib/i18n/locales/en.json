@@ -1,0 +1,67 @@
+{
+  "header": {
+    "how_it_works": "How it Works",
+    "projects": "Projects",
+    "login": "Login",
+    "register": "Sign Up"
+  },
+  "footer": {
+    "description": "The B2B platform connecting companies, clients, and contractors for your next construction project.",
+    "links": "Links",
+    "legal": "Legal",
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "privacy_policy": "Privacy Policy",
+    "terms_of_service": "Terms of Service",
+    "rights_reserved": "All rights reserved."
+  },
+  "home": {
+    "hero": {
+      "title": "The B2B Hub for Construction Projects",
+      "subtitle": "We connect companies, clients, and verified professionals in a transparent and efficient platform. From RFQ to project completion.",
+      "cta_register": "Get Started",
+      "cta_explore": "Explore Projects"
+    },
+    "how_it_works": {
+      "badge": "How It Works",
+      "title": "A Simplified Process for Everyone",
+      "subtitle": "Our platform is designed to streamline the entire project lifecycle, ensuring transparency and efficiency for all parties involved.",
+      "steps": [
+        {
+          "for": "Empresa",
+          "title": "For Companies (Admin)",
+          "items": [
+            "Create and publish detailed project RFQs.",
+            "Manage users and platform settings.",
+            "Receive and evaluate proposals from contractors.",
+            "Score bids and award projects to the best fit."
+          ]
+        },
+        {
+          "for": "Cliente",
+          "title": "For Clients",
+          "items": [
+            "Submit your project requirements with ease.",
+            "Receive notifications on project status.",
+            "Track progress from start to finish.",
+            "Review shortlisted proposals for your project."
+          ]
+        },
+        {
+          "for": "Profissional",
+          "title": "For Contractors",
+          "items": [
+            "Access a curated list of available projects.",
+            "Submit detailed technical and financial bids.",
+            "Manage your proposals and ongoing projects.",
+            "Build your reputation on the platform."
+          ]
+        }
+      ]
+    },
+    "featured_projects": {
+      "title": "Featured Projects",
+      "subtitle": "Check out some of the latest opportunities available on our platform."
+    }
+  }
+}

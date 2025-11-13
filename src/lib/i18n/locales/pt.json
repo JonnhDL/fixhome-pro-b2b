@@ -1,0 +1,67 @@
+{
+  "header": {
+    "how_it_works": "Como Funciona",
+    "projects": "Projetos",
+    "login": "Entrar",
+    "register": "Registar"
+  },
+  "footer": {
+    "description": "A plataforma B2B que liga empresas, clientes e empreiteiros para o seu próximo projeto de construção.",
+    "links": "Links",
+    "legal": "Legal",
+    "home": "Início",
+    "dashboard": "Dashboard",
+    "privacy_policy": "Política de Privacidade",
+    "terms_of_service": "Termos de Serviço",
+    "rights_reserved": "Todos os direitos reservados."
+  },
+  "home": {
+    "hero": {
+      "title": "O Hub B2B para Projetos de Construção",
+      "subtitle": "Ligamos empresas, clientes e profissionais verificados numa plataforma transparente e eficiente. Do pedido de orçamento à conclusão do projeto.",
+      "cta_register": "Começar Agora",
+      "cta_explore": "Explorar Projetos"
+    },
+    "how_it_works": {
+      "badge": "Como Funciona",
+      "title": "Um Processo Simplificado para Todos",
+      "subtitle": "A nossa plataforma foi desenhada para otimizar todo o ciclo de vida do projeto, garantindo transparência e eficiência para todos os envolvidos.",
+      "steps": [
+        {
+          "for": "Empresa",
+          "title": "Para Empresas (Admin)",
+          "items": [
+            "Crie e publique pedidos de orçamento detalhados.",
+            "Faça a gestão de utilizadores e configurações da plataforma.",
+            "Receba e avalie propostas de empreiteiros.",
+            "Pontue propostas e adjudique projetos ao melhor candidato."
+          ]
+        },
+        {
+          "for": "Cliente",
+          "title": "Para Clientes",
+          "items": [
+            "Submeta os requisitos do seu projeto facilmente.",
+            "Receba notificações sobre o estado do projeto.",
+            "Acompanhe o progresso do início ao fim.",
+            "Reveja as propostas finalistas para o seu projeto."
+          ]
+        },
+        {
+          "for": "Profissional",
+          "title": "Para Profissionais",
+          "items": [
+            "Aceda a uma lista de projetos disponíveis.",
+            "Submeta propostas técnicas e financeiras detalhadas.",
+            "Faça a gestão das suas propostas e projetos em curso.",
+            "Construa a sua reputação na plataforma."
+          ]
+        }
+      ]
+    },
+    "featured_projects": {
+      "title": "Projetos em Destaque",
+      "subtitle": "Veja algumas das mais recentes oportunidades disponíveis na nossa plataforma."
+    }
+  }
+}
