@@ -16,7 +16,8 @@ type PageProps = {
 };
 
 export default function ProjectDetailsPage({ params, searchParams }: PageProps) {
-  const project = mockProjects.find((p) => p.id === params.id);
+  const { id } = params;
+const project = mockProjects.find((p) => p.id === id);
   if (!project) {
     notFound();
   }
