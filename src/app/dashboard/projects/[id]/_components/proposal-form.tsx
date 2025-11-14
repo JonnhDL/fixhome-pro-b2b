@@ -1,76 +1,166 @@
-"use client";
+'use client';
 
-import { useFormState, useFormStatus } from "react-dom";
-import { useEffect, useRef } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { submitProposal } from "@/app/actions";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { createProposal } from '@/lib/firebase/firestore';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { FileText, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? "A submeter..." : "Submeter Proposta"}
-    </Button>
-  );
+interface ProposalFormProps {
+  projectId: string;
+  projectTitle: string;
 }
 
-export function ProposalForm({ projectId }: { projectId: string }) {
-  const [state, formAction] = useFormState(submitProposal, null);
+export function ProposalForm({ projectId, projectTitle }: ProposalFormProps) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { user, userData } = useAuth();
+  const router = useRouter();
   const { toast } = useToast();
-  const formRef = useRef<HTMLFormElement>(null);
 
-  useEffect(() => {
-    if (state?.message && !state.errors) {
-      toast({
-        title: "Sucesso!",
-        description: state.message,
-      });
-      formRef.current?.reset();
-    } else if (state?.message && state.errors) {
-      toast({
-        title: "Erro de Validação",
-        description: state.message,
-        variant: "destructive",
-      });
-    }
-  }, [state, toast]);
+  const [formData, setFormData] = useState({
+    amount: '',
+    timeline: '',
+    description: '',
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
   
+  if (!user || !userData) {
+    toast({
+      title: 'Erro',
+      description: 'Você precisa estar autenticado',
+      variant: 'destructive',
+    });
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    await createProposal({
+      projectId,
+      contractorId: user.uid,
+      contractorName: user.email || 'Profissional',
+      amount: parseFloat(formData.amount),
+      timeline: formData.timeline,
+      description: formData.description,
+      status: 'pendente',
+    });
+
+    toast({
+      title: 'Sucesso!',
+      description: 'Proposta enviada com sucesso',
+    });
+
+    setFormData({ amount: '', timeline: '', description: '' });
+    setOpen(false);
+    router.refresh();
+  } catch (error) {
+    console.error('Error creating proposal:', error);
+    toast({
+      title: 'Erro',
+      description: 'Erro ao enviar proposta. Tente novamente.',
+      variant: 'destructive',
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
+  if (userData?.role !== 'contractor') {
+    return null;
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Submeter Proposta</CardTitle>
-        <CardDescription>Preencha os detalhes da sua proposta para este projeto.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form ref={formRef} action={formAction} className="space-y-4">
-          <input type="hidden" name="projectId" value={projectId} />
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="lg">
+          <FileText className="mr-2 h-4 w-4" />
+          Enviar Proposta
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>Enviar Proposta</DialogTitle>
+          <DialogDescription>
+            Proposta para: {projectTitle}
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="financialBid">Proposta Financeira (€)</Label>
-            <Input id="financialBid" name="financialBid" type="number" step="0.01" placeholder="23500.00" />
-            {state?.errors?.financialBid && <p className="text-sm text-red-500">{state.errors.financialBid}</p>}
+            <Label htmlFor="amount">Valor da Proposta (€) *</Label>
+            <Input
+              id="amount"
+              type="number"
+              placeholder="45000"
+              value={formData.amount}
+              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+              min="0"
+              step="0.01"
+              required
+            />
           </div>
+
           <div className="space-y-2">
-            <Label htmlFor="estimatedTimeline">Prazo Estimado</Label>
-            <Input id="estimatedTimeline" name="estimatedTimeline" type="text" placeholder="Ex: 4 semanas" />
-             {state?.errors?.estimatedTimeline && <p className="text-sm text-red-500">{state.errors.estimatedTimeline}</p>}
+            <Label htmlFor="timeline">Prazo de Execução *</Label>
+            <Input
+              id="timeline"
+              placeholder="Ex: 3 meses"
+              value={formData.timeline}
+              onChange={(e) => setFormData({ ...formData, timeline: e.target.value })}
+              required
+            />
           </div>
+
           <div className="space-y-2">
-            <Label htmlFor="technicalProposal">Proposta Técnica</Label>
-            <Textarea id="technicalProposal" name="technicalProposal" placeholder="Descreva a sua abordagem, materiais e diferenciais." rows={6} />
-             {state?.errors?.technicalProposal && <p className="text-sm text-red-500">{state.errors.technicalProposal}</p>}
+            <Label htmlFor="description">Descrição da Proposta *</Label>
+            <Textarea
+              id="description"
+              placeholder="Detalhe sua proposta, metodologia, materiais..."
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows={5}
+              required
+            />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="files">Anexos</Label>
-            <Input id="files" name="files" type="file" multiple />
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                'Enviar Proposta'
+              )}
+            </Button>
           </div>
-          <SubmitButton />
         </form>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 }

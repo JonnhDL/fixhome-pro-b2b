@@ -1,21 +1,58 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import { Package, TrendingUp, Clock, CheckCircle2 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "../components/stat-card";
 import { ProjectDataTable } from "../components/project-data-table";
-import { mockProjects, mockProposals } from "@/lib/data";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { useAuth } from '@/context/AuthContext';
+import { getAllProjects, type Project } from "@/lib/firebase/firestore";
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ContractorDashboardPage() {
-  // Mock data - filtrar projetos onde o contractor pode fazer proposta
-  const availableProjects = mockProjects.filter(p => p.status === "aberto");
-  const myProposals = mockProposals.filter(p => p.contractorId === "contractor-1");
-  const acceptedProposals = myProposals.filter(p => p.status === "aceite");
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [myProposals, setMyProposals] = useState(0);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    loadProjects();
+    if (user) {
+      loadMyProposals();
+    }
+  }, [user]);
+
+  const loadProjects = async () => {
+    try {
+      const data = await getAllProjects();
+      setProjects(data);
+    } catch (error) {
+      console.error('Error loading projects:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadMyProposals = async () => {
+    if (!user) return;
+    
+    try {
+      const q = query(
+        collection(db, 'proposals'),
+        where('contractorId', '==', user.uid)
+      );
+      const snapshot = await getDocs(q);
+      setMyProposals(snapshot.size);
+    } catch (error) {
+      console.error('Error loading proposals:', error);
+    }
+  };
+
+  const availableProjects = projects.filter(p => p.status === "aberto");
+  const acceptedProposals = 0; // Mock por enquanto
 
   return (
     <ProtectedRoute allowedRoles={['contractor']}>
@@ -36,19 +73,19 @@ export default function ContractorDashboardPage() {
           />
           <StatCard
             title="Minhas Propostas"
-            value={myProposals.length.toString()}
+            value={myProposals.toString()}
             icon={TrendingUp}
             description="Total de propostas submetidas."
           />
           <StatCard
             title="Propostas Aceites"
-            value={acceptedProposals.length.toString()}
+            value={acceptedProposals.toString()}
             icon={CheckCircle2}
             description="Propostas aprovadas pelo cliente."
           />
           <StatCard
             title="Em Andamento"
-            value="1"
+            value="0"
             icon={Clock}
             description="Projetos atualmente em execução."
           />
@@ -62,7 +99,20 @@ export default function ContractorDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ProjectDataTable projects={availableProjects} role="Profissional" />
+            {loading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            ) : availableProjects.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">
+                  Nenhum projeto disponível no momento
+                </p>
+              </div>
+            ) : (
+              <ProjectDataTable projects={availableProjects} role="Profissional" />
+            )}
           </CardContent>
         </Card>
       </div>

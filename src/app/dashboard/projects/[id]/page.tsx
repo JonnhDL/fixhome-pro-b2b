@@ -1,59 +1,71 @@
-import { notFound } from "next/navigation";
-import { format } from "date-fns";
-import { mockProjects, mockProposals } from "@/lib/data";
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import { getProjectById, type Project } from '@/lib/firebase/firestore';
+import { ProposalForm } from './_components/proposal-form';
+import { ProposalsList } from './_components/proposals-list';
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { File, Calendar, DollarSign, User } from "lucide-react";
-import Link from "next/link";
-import { ProposalForm } from "./_components/proposal-form";
-import { ProposalsList } from "./_components/proposals-list";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar, DollarSign, User, Loader2 } from "lucide-react";
+import { format } from "date-fns";
+import { pt } from "date-fns/locale";
 
-// In a real app, you'd get the role from the session
-type PageProps = {
-  params: { id: string },
-  searchParams: { role?: 'Empresa' | 'Profissional' | 'Cliente' }
-};
-
-export default function ProjectDetailsPage({ params, searchParams }: PageProps) {
-  const { id } = params;
-const project = mockProjects.find((p) => p.id === id);
-  if (!project) {
-    notFound();
-  }
+export default function ProjectDetailsPage() {
+  const params = useParams();
+  const projectId = params.id as string;
   
-  const role = searchParams.role || 'Empresa'; // Default to admin for demo
-  const proposals = mockProposals.filter(p => p.projectId === project.id);
+  const [project, setProject] = useState<Project | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const renderContentByRole = () => {
-    switch (role) {
-      case 'Empresa':
-        return <ProposalsList proposals={proposals} />;
-      case 'Profissional':
-        return <ProposalForm projectId={project.id} />;
-      case 'Cliente':
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Estado do Projeto</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>O seu projeto está atualmente <span className="font-semibold">{project.status}</span>.</p>
-              {project.status === 'Em Análise' && <p className="mt-2 text-muted-foreground">As propostas estão a ser avaliadas. Será notificado em breve.</p>}
-              {project.status === 'Adjudicado' && <p className="mt-2 text-muted-foreground">O projeto foi adjudicado. O profissional selecionado irá entrar em contacto.</p>}
-            </CardContent>
-          </Card>
-        );
-      default:
-        return null;
+  useEffect(() => {
+    if (projectId) {
+      loadProject();
+    }
+  }, [projectId]);
+
+  const loadProject = async () => {
+    try {
+      const data = await getProjectById(projectId);
+      setProject(data);
+    } catch (error) {
+      console.error('Error loading project:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!project) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <h1 className="text-2xl font-bold mb-2">Projeto não encontrado</h1>
+        <p className="text-muted-foreground">O projeto que procura não existe.</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
+    <div className="mx-auto max-w-5xl space-y-8 p-4">
       <div>
-        <Badge variant="secondary">{project.status}</Badge>
-        <h1 className="mt-2 text-4xl font-bold font-headline tracking-tight">{project.title}</h1>
+        <div className="flex items-center justify-between mb-4">
+          <Badge variant="secondary">
+            {project.status}
+          </Badge>
+          <ProposalForm projectId={projectId} projectTitle={project.title} />
+        </div>
+        
+        <h1 className="text-4xl font-bold font-headline tracking-tight">
+          {project.title}
+        </h1>
+        
         <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <User className="h-4 w-4" />
@@ -61,61 +73,52 @@ const project = mockProjects.find((p) => p.id === id);
           </div>
           <div className="flex items-center gap-2">
             <DollarSign className="h-4 w-4" />
-            <span>Orçamento: {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(project.budget)}</span>
+            <span>
+              Orçamento: {new Intl.NumberFormat('pt-PT', { 
+                style: 'currency', 
+                currency: 'EUR' 
+              }).format(project.budget)}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
-            <span>Prazo: {format(project.deadline, "dd 'de' MMMM 'de' yyyy")}</span>
+            <span>
+              Prazo: {format(new Date(project.deadline), "dd 'de' MMMM 'de' yyyy", { locale: pt })}
+            </span>
           </div>
         </div>
       </div>
-      
-      <div className="grid md:grid-cols-3 gap-8">
-        <div className="md:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Descrição do Projeto</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">{project.description}</p>
-            </CardContent>
-          </Card>
 
-          {renderContentByRole()}
-        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Descrição do Projeto</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground whitespace-pre-wrap">
+            {project.description}
+          </p>
+        </CardContent>
+      </Card>
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Documentos do Projeto</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {project.files.map((file) => (
-                  <li key={file.name}>
-                    <Link href={file.url} className="flex items-center gap-2 text-sm text-primary hover:underline">
-                      <File className="h-4 w-4" />
-                      <span>{file.name}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-secondary">
-             <CardHeader>
-                <CardTitle>Mudar de Perfil (Demo)</CardTitle>
-                <CardDescription>Veja esta página como um utilizador diferente.</CardDescription>
-             </CardHeader>
-             <CardContent className="flex flex-col gap-2">
-                <Link href={`?role=Empresa`} className="text-sm font-medium text-primary hover:underline">Ver como Admin</Link>
-                <Link href={`?role=Profissional`} className="text-sm font-medium text-primary hover:underline">Ver como Profissional</Link>
-                <Link href={`?role=Cliente`} className="text-sm font-medium text-primary hover:underline">Ver como Cliente</Link>
-             </CardContent>
-          </Card>
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Informações Adicionais</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div className="flex justify-between">
+            <span className="font-medium">Estado:</span>
+            <Badge variant="secondary">{project.status}</Badge>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-medium">Criado em:</span>
+            <span className="text-muted-foreground">
+              {project.createdAt ? format(new Date(project.createdAt.seconds * 1000), "dd/MM/yyyy") : 'N/A'}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      <ProposalsList projectId={projectId} />
     </div>
   );
 }

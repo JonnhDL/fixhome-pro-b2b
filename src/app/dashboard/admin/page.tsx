@@ -1,22 +1,37 @@
-import { PlusCircle, Briefcase, Users, FileText } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+'use client';
+
+import { useEffect, useState } from 'react';
+import { Briefcase, Users, FileText } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "../components/stat-card";
 import { ProjectDataTable } from "../components/project-data-table";
-import { mockProjects, mockProposals, mockUsers } from "@/lib/data";
 import { NewProjectDialog } from "./_components/new-project-dialog";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { getAllProjects, type Project } from "@/lib/firebase/firestore";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminDashboardPage() {
-  const totalProjects = mockProjects.length;
-  const totalProposals = mockProposals.length;
-  const totalUsers = mockUsers.length;
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadProjects();
+  }, []);
+
+  const loadProjects = async () => {
+    try {
+      const data = await getAllProjects();
+      setProjects(data);
+    } catch (error) {
+      console.error('Error loading projects:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const totalProjects = projects.length;
+  const totalProposals = 0; // Por enquanto
+  const totalUsers = 4; // Mock - será real depois
 
   return (
     <ProtectedRoute allowedRoles={['admin']}>
@@ -58,7 +73,22 @@ export default function AdminDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ProjectDataTable projects={mockProjects} role="Empresa" />
+            {loading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            ) : projects.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground mb-4">
+                  Nenhum projeto criado ainda
+                </p>
+                <NewProjectDialog />
+              </div>
+            ) : (
+              <ProjectDataTable projects={projects} role="Empresa" />
+            )}
           </CardContent>
         </Card>
       </div>
